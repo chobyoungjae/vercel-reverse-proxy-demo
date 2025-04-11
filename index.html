@@ -2,29 +2,109 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>GAS 연결 테스트</title>
+    <title>Kakao + GAS 메시지 시스템</title>
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
     <style>
-      body {
-        font-family: sans-serif;
-        padding: 20px;
-      }
-      #result {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
+      body { font-family: sans-serif; padding: 20px; }
+      button { margin: 5px; }
+      table, td, th {
+        border: 1px solid #aaa;
+        border-collapse: collapse;
+        padding: 6px;
       }
     </style>
   </head>
   <body>
-    <h1>Google Apps Script 연결 테스트</h1>
-    <button onclick="loadGAS()">GAS에서 내용 가져오기</button>
-    <div id="result">여기에 GAS 응답이 표시됩니다.</div>
+    <h1>Kakao 메시지 전송 시스템</h1>
+
+    <!-- 로그인 버튼 -->
+    <button onclick="kakaoLogin()">🔐 카카오 로그인</button>
+    <div id="loginStatus"></div>
+
+    <!-- 친구 목록 로드 -->
+    <button onclick="loadFriends()">👥 친구 목록 불러오기</button>
+    <ul id="friendList"></ul>
+
+    <!-- 스프레드시트 메시지 불러오기 -->
+    <button onclick="loadSpreadsheet()">📄 스프레드시트 불러오기</button>
+    <div id="messageTable"></div>
 
     <script>
-      async function loadGAS() {
-        const response = await fetch("https://script.google.com/macros/s/AKfycbyxq-SOgDujTwvQRItHt-k24P2QVuRoqZ62N7vKGSZbLd60npKuLPrcNMEFO-kHQoWO/exec");
-        const text = await response.text();
-        document.getElementById("result").innerHTML = text;
+      // Kakao SDK 초기화
+      Kakao.init('🔑여기에_당신의_JavaScript_키'); // 카카오 JavaScript 키로 변경하세요
+
+      let kakaoFriends = [];
+      let sheetData = [];
+
+      function kakaoLogin() {
+        Kakao.Auth.login({
+          success: function(authObj) {
+            document.getElementById('loginStatus').innerText = '✅ 로그인 성공';
+          },
+          fail: function(err) {
+            document.getElementById('loginStatus').innerText = '❌ 로그인 실패: ' + JSON.stringify(err);
+          }
+        });
+      }
+
+      function loadFriends() {
+        Kakao.API.request({
+          url: '/v1/api/talk/friends',
+          success: function(res) {
+            kakaoFriends = res.elements;
+            let html = kakaoFriends.map(f => `<li>${f.profile_nickname} (uuid: ${f.uuid})</li>`).join('');
+            document.getElementById('friendList').innerHTML = html;
+          },
+          fail: function(error) {
+            alert('친구 목록 실패: ' + JSON.stringify(error));
+          }
+        });
+      }
+
+      function loadSpreadsheet() {
+        fetch("https://script.google.com/macros/s/🔁GAS_웹앱_URL/exec")
+          .then(res => res.json())
+          .then(data => {
+            sheetData = data;
+            renderMessageTable();
+          });
+      }
+
+      function renderMessageTable() {
+        let html = "<table><tr><th>이름</th><th>메시지</th><th>상태</th><th>전송</th></tr>";
+        sheetData.forEach((row, idx) => {
+          const [name, msg, status] = row;
+          html += `<tr><td>${name}</td><td>${msg}</td><td>${status}</td>`;
+          html += `<td><button onclick="sendMessage(${idx})">보내기</button></td></tr>`;
+        });
+        html += "</table>";
+        document.getElementById('messageTable').innerHTML = html;
+      }
+
+      function sendMessage(rowIdx) {
+        const [name, message] = sheetData[rowIdx];
+        const friend = kakaoFriends.find(f => f.profile_nickname === name);
+
+        if (!friend) {
+          alert(`${name} 님을 친구 목록에서 찾을 수 없습니다.`);
+          return;
+        }
+
+        // 템플릿 메시지 전송 예시 (권한 필요)
+        Kakao.API.request({
+          url: '/v1/api/talk/friends/message/send',
+          data: {
+            receiver_uuids: JSON.stringify([friend.uuid]),
+            template_id: 🔢12345, // 템플릿 ID 실제 값으로 대체
+            template_args: JSON.stringify({ message: message })
+          },
+          success: function(res) {
+            alert(`✅ ${name}님에게 메시지 전송 성공!`);
+          },
+          fail: function(err) {
+            alert(`❌ 메시지 실패: ${JSON.stringify(err)}`);
+          }
+        });
       }
     </script>
   </body>
