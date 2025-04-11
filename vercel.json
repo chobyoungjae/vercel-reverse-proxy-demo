@@ -1,8 +1,9 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/abc",
       "destination": "https://script.google.com/macros/s/AKfycbyxq-SOgDujTwvQRItHt-k24P2QVuRoqZ62N7vKGSZbLd60npKuLPrcNMEFO-kHQoWO/exec"
     }
   ]
 }
+test: rewrite /abc 경로로만 Google Apps Script 연결 테스트
