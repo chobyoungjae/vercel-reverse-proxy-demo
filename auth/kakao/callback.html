@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Kakao Redirect 처리 중...</title>
+</head>
+<body>
+  <h1>✅ 카카오 로그인 리디렉션 완료</h1>
+  <p id="status">로그인 처리 중...</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (code) {
+      document.getElementById('status').innerHTML = `카카오에서 받은 인증 코드: <br><code>${code}</code>`;
+    } else {
+      document.getElementById('status').innerText = "❗ 인증 코드 없음. 로그인 실패 또는 사용자 취소.";
+    }
+  </script>
+</body>
+</html>
